@@ -1,5 +1,11 @@
 #include <Windows.h>
 #include <stdio.h>
+#include <ip2string.h>
+#include <In6addr.h>
+
+// this header is full of errors
+//#include <Ws2ipdef.h>
+#define INET6_ADDRSTRLEN 65
 
 // first generated a payload padded to % 16 == 0 with
 // .\msfvenom.bat -p windows/x64/exec CMD=calc.exe -f raw --pad-nops -n 288
@@ -12,6 +18,7 @@ INT main(INT argc, PSTR* argv) {
 	DWORD buff_size;
 	BYTE* payload_buff = NULL; 
 	BYTE* pbuff = NULL;
+	CHAR ipv6_str[INET6_ADDRSTRLEN];
 
 	if (argc != 2) {
 		return 1;
@@ -41,8 +48,6 @@ INT main(INT argc, PSTR* argv) {
 		buff_size = file_size + 16 - (file_size % 16);
 	}
 
-	printf("file size %d buff size %d\n", file_size, buff_size);
-
 	payload_buff = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buff_size);
 
 	ReadFile(file, payload_buff, buff_size, NULL, NULL);
@@ -52,9 +57,11 @@ INT main(INT argc, PSTR* argv) {
 
 	pbuff = payload_buff;
 
-	puts("const PSTR ipv6_payload[] = {");
+	puts("PCSTR ipv6_payload[] = {");
 
 	while (pbuff < payload_buff + buff_size) {
+		RtlIpv6AddressToStringA((IN6_ADDR*)pbuff, (PSTR)&ipv6_str);
+		/*
 		printf("\t\"%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X:%0.2X%0.2X\",\n",
 			pbuff[0],
 			pbuff[1],
@@ -73,8 +80,9 @@ INT main(INT argc, PSTR* argv) {
 			pbuff[14],
 			pbuff[15]
 		);
-
-		pbuff += 16;
+		*/
+		printf("\t\"%s\",\n", ipv6_str);
+		pbuff += sizeof(IN6_ADDR);
 	}
 
 	puts("};");
