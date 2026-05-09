@@ -1,1 +1,1 @@
-cl /Wall /WX /external:W0 module.c
+cl /Wall /WX /external:W0 %*
